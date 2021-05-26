@@ -10,6 +10,7 @@ import {
   deleteMembership,
   fetchAssets,
   fetchMemberships,
+  getUserAssets,
   isMyCryptoMember,
   useDispatch,
   useSelector
@@ -85,7 +86,6 @@ export const StoreContext = createContext({} as State);
 export const StoreProvider: React.FC = ({ children }) => {
   const {
     accounts,
-    userAssets,
     getAccountByAddressAndNetworkName,
     updateAccounts,
     deleteAccount,
@@ -184,9 +184,7 @@ export const StoreProvider: React.FC = ({ children }) => {
     uniClaims,
     ensOwnershipRecords,
     isEnsFetched,
-    get userAssets() {
-      return userAssets;
-    },
+    userAssets: useSelector(getUserAssets),
     assets: (selectedAccounts = state.accounts) =>
       selectedAccounts.flatMap((account: StoreAccount) => account.assets),
     totals: (selectedAccounts = state.accounts) =>
