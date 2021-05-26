@@ -18,13 +18,14 @@ import {
   NetworkId,
   StoreAccount,
   StoreAsset,
-  TUuid
+  TUuid,
+  WalletId
 } from '@types';
 import { isViewOnlyWallet, sortByLabel } from '@utils';
-import { findIndex, propEq } from '@vendor';
+import { findIndex, prop, propEq, sortBy, uniqBy } from '@vendor';
 
 import { getAccountByAddressAndNetworkName } from '../Account';
-import { getTxsFromAccount, isTokenMigration } from '../helpers';
+import { getTxsFromAccount, isNotExcludedAsset, isTokenMigration } from '../helpers';
 import { getNetworkById } from '../Network';
 import { toStoreAccount } from '../utils';
 import { getAssetByUUID, getAssets } from './asset.slice';
@@ -33,7 +34,12 @@ import { sanitizeAccount } from './helpers';
 import { fetchMemberships } from './membership.slice';
 import { getNetwork, selectNetworks } from './network.slice';
 import { getAppState } from './selectors';
-import { addAccountsToFavorites, getFavorites, getIsDemoMode } from './settings.slice';
+import {
+  addAccountsToFavorites,
+  getExcludedAssets,
+  getFavorites,
+  getIsDemoMode
+} from './settings.slice';
 import { scanTokens } from './tokenScanning.slice';
 
 export const initialState = [] as IAccount[];
@@ -137,6 +143,23 @@ export const getAccountsAssets = createSelector([getAccounts, (s) => s], (a, s) 
   a
     .flatMap((a) => a.assets)
     .reduce((acc, asset) => [...acc, getAssetByUUID(asset.uuid)(s)], [] as StoreAsset[])
+);
+
+export const getUserAssets = createSelector(
+  [getAccounts, getExcludedAssets, (s) => s],
+  (accounts, excludedAssets, s) => {
+    const userAssets = accounts
+      .filter((a) => a.wallet !== WalletId.VIEW_ONLY)
+      .flatMap((a) => a.assets)
+      .reduce(
+        (acc, asset) => [...acc, { ...asset, ...getAssetByUUID(asset.uuid)(s)! }],
+        [] as StoreAsset[]
+      )
+      .filter(isNotExcludedAsset(excludedAssets));
+
+    const uniq = uniqBy(prop('uuid'), userAssets);
+    return sortBy(prop('ticker'), uniq);
+  }
 );
 
 export const getAccountsAssetsMappings = createSelector([getAccountsAssets], (assets) =>
