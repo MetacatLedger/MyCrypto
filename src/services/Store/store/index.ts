@@ -27,7 +27,9 @@ export {
   addTxToAccount,
   getStoreAccounts,
   getDefaultAccount,
-  getUserAssets
+  getUserAssets,
+  startBalancesPolling,
+  stopBalancesPolling
 } from './account.slice';
 export {
   createContact,

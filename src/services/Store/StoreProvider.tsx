@@ -1,4 +1,4 @@
-import React, { createContext, useEffect, useMemo, useState } from 'react';
+import React, { createContext, useEffect, useState } from 'react';
 
 import { DEFAULT_NETWORK } from '@config';
 import { MembershipStatus } from '@features/PurchaseMembership/config';
@@ -8,10 +8,9 @@ import { isEthereumAccount } from '@services/Store/Account';
 import {
   addAccounts,
   deleteMembership,
-  fetchAssets,
-  fetchMemberships,
   getUserAssets,
   isMyCryptoMember,
+  selectCurrentAccounts,
   useDispatch,
   useSelector
 } from '@store';
@@ -35,16 +34,13 @@ import {
   convertToFiatFromAsset,
   generateDeterministicAddressUUID,
   generateUUID,
-  getWeb3Config,
-  isArrayEqual,
-  useInterval
+  getWeb3Config
 } from '@utils';
-import { isEmpty, isEmpty as isVoid, useEffectOnce } from '@vendor';
+import { isEmpty } from '@vendor';
 
 import { UniswapService } from '../ApiService';
-import { getDashboardAccounts, useAccounts } from './Account';
+import { useAccounts } from './Account';
 import { getNewDefaultAssetTemplateByNetwork, getTotalByAsset, useAssets } from './Asset';
-import { getAccountsAssetsBalances } from './BalanceService';
 import { useContacts } from './Contact';
 import { findMultipleNextUnusedDefaultLabels } from './Contact/helpers';
 import { getNetworkById, useNetworks } from './Network';
@@ -87,7 +83,6 @@ export const StoreProvider: React.FC = ({ children }) => {
   const {
     accounts,
     getAccountByAddressAndNetworkName,
-    updateAccounts,
     deleteAccount,
     createMultipleAccountsWithIDs
   } = useAccounts();
@@ -101,44 +96,7 @@ export const StoreProvider: React.FC = ({ children }) => {
     {}
   );
 
-  const currentAccounts = useMemo(
-    () => getDashboardAccounts(accounts, settings.dashboardAccounts),
-    [accounts, settings.dashboardAccounts, assets]
-  );
-
-  // Naive polling to get the Balances of baseAsset and tokens for each account.
-  useInterval(
-    () => {
-      // Pattern to cancel setState call if ever the component is unmounted
-      // before the async requests completes.
-      // @todo: extract into seperate hook e.g. react-use
-      // https://www.robinwieruch.de/react-hooks-fetch-data
-      if (isVoid(networks)) return;
-      let isMounted = true;
-      getAccountsAssetsBalances(currentAccounts).then((accountsWithBalances: StoreAccount[]) => {
-        // Avoid the state change if the balances are identical.
-        if (isMounted && !isArrayEqual(currentAccounts, accountsWithBalances.filter(Boolean))) {
-          updateAccounts(accountsWithBalances);
-        }
-      });
-
-      return () => {
-        isMounted = false;
-      };
-    },
-    60000,
-    true,
-    [networks]
-  );
-
-  useEffectOnce(() => {
-    dispatch(fetchMemberships());
-  });
-
-  // fetch assets from api
-  useEffectOnce(() => {
-    dispatch(fetchAssets());
-  });
+  const currentAccounts = useSelector(selectCurrentAccounts);
 
   const mainnetAccounts = accounts
     .filter((a) => a.networkId === DEFAULT_NETWORK)
