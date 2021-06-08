@@ -26,7 +26,8 @@ describe('SendAssetsFlow', () => {
           ({
             userAssets: [],
             accounts: fAccounts,
-            getAccount: jest.fn()
+            getAccount: jest.fn(),
+            networks: APP_STATE.networks
           } as unknown) as any
         }
       >
