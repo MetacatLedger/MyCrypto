@@ -8,7 +8,6 @@ import { isEthereumAccount } from '@services/Store/Account';
 import {
   addAccounts,
   deleteMembership,
-  getUserAssets,
   isMyCryptoMember,
   selectCurrentAccounts,
   useDispatch,
@@ -57,7 +56,6 @@ export interface State {
   readonly isMyCryptoMember: boolean;
   readonly memberships?: MembershipStatus[];
   readonly currentAccounts: StoreAccount[];
-  readonly userAssets: Asset[];
   readonly uniClaims: UniClaimResult[];
   readonly ensOwnershipRecords: DomainNameRecord[];
   readonly isEnsFetched: boolean;
@@ -142,7 +140,6 @@ export const StoreProvider: React.FC = ({ children }) => {
     uniClaims,
     ensOwnershipRecords,
     isEnsFetched,
-    userAssets: useSelector(getUserAssets),
     assets: (selectedAccounts = state.accounts) =>
       selectedAccounts.flatMap((account: StoreAccount) => account.assets),
     totals: (selectedAccounts = state.accounts) =>
